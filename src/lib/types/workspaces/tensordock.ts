@@ -1,4 +1,4 @@
-import type { ServiceSimple } from '$lib/types/backend'
+import type { ModelSimple, ServiceSimple, UtilitySimple } from '$lib/types/backend'
 
 export interface TensordockDetails {
     type: string;
@@ -12,7 +12,9 @@ export interface TensordockDetails {
             external_port: number
         }
     ]
+    models?:  ModelSimple[];
     services?: ServiceSimple[];
+    utilities?:  UtilitySimple[];
 }
 
 /*

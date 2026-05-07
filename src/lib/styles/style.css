@@ -1,0 +1,75 @@
+:global(:root) {
+    --app-width: 1024px;
+}
+
+:global(body) {
+    background: var(--theme-bg-grad-0);
+    background-color: var(--theme-bg-grad-0);
+    background: linear-gradient(0deg, var(--theme-bg-grad-0) 0%, var(--theme-bg-grad-1) 100%);
+    background: -moz-linear-gradient(0deg, var(--theme-bg-grad-0) 0%, var(--theme-bg-grad-1) 100%);
+    background: -webkit-linear-gradient(0deg, var(--theme-bg-grad-0) 0%, var(--theme-bg-grad-1) 100%);
+    font-family: "Asap", sans-serif;
+    color: var(--theme-fg-default);
+    padding: 0;
+    margin: 0;
+}
+
+:global(button) {
+    background-color: var(--theme-btn-default);
+    -webkit-transition: background-color 300ms;
+    -moz-transition: background-color 300ms;
+    transition: background-color 300ms;
+    color: var(--theme-btn-fg-default);
+    text-transform: uppercase;
+    border-radius: 5px;
+    padding: 10px 15px;
+    margin-left: -5px;
+    margin-top: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    border: 0;
+}
+
+:global(input) {
+    background: var(--theme-bg-nav-default);
+    text-shadow: var(--theme-text-shadow);
+    color: var(--theme-fg-muted);
+    padding: 10px 10px;
+    margin: 15px -10px;
+    border-radius: 5px;
+    font-size: 16px;
+    display: block;
+    width: 100%;
+    border: 0;
+}
+
+:global(button:hover) {
+    background-color: var(--theme-btn-hover);
+    color: var(--theme-btn-fg-hover);
+}
+
+:global(button:active) {
+    background-color: var(--theme-btn-active);
+    color: var(--theme-btn-fg-active);
+}
+
+:global(button:disabled) {
+    background-color: var(--theme-btn-default);
+    color: var(--theme-btn-fg-disabled);
+}
+
+:global(a) {
+    text-shadow: var(--theme-text-shadow);
+    color: var(--theme-a-default);
+    text-decoration: none;
+    position: relative;
+    font-size: 18px;
+}
+
+:global(a:hover) {
+    color: var(--theme-a-hover);
+}
+
+:global(a:visited) {
+    color: var(--theme-a-visited);
+}

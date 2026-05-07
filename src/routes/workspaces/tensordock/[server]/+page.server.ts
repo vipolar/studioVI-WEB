@@ -1,17 +1,27 @@
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, cookies }) => {
-    const flaskUrl = `http://localhost:5000/services/get/all?extensive=true`;
+    const flaskServicesURL = `http://localhost:5000/services/get/all?extensive=false`;
+    const flaskModelsURL = `http://localhost:5000/models/get/all?extensive=false`;
 
     try {
-        const response = await fetch(flaskUrl);
+        const flaskServicesResponse = await fetch(flaskServicesURL);
+        const flaskModelsResponse = await fetch(flaskModelsURL);
 
-        if (!response.ok) {
-            throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
+        if (!flaskServicesResponse.ok) {
+            throw new Error(`Failed to fetch: ${flaskServicesResponse.status} ${flaskServicesResponse.statusText}`);
         }
 
-        //const services = await response.json();
-        return await response.json();
+        if (!flaskModelsResponse.ok) {
+            throw new Error(`Failed to fetch: ${flaskModelsResponse.status} ${flaskModelsResponse.statusText}`);
+        }
+
+        const services = await flaskServicesResponse.json();
+        const models = await flaskModelsResponse.json();
+        return {
+            ...services,
+            ...models
+        }
     } catch (error) {
         return {
             error: (error as Error).message
@@ -40,15 +50,6 @@ export const actions = {
 
         apiRequestParams.append("username", username);
         apiRequestParams.append("password", password);
-//        apiRequestParams.append("role", "user");
-
-      /*  cookies.set(`${server}_tensordock`, JSON.stringify({api_key: api_key, api_token: api_token}), {
-            path: workspacesCookiePath,
-            sameSite: 'strict',
-            httpOnly: true,
-            secure: true,
-            maxAge: 3600
-        }); */
 
         try {
             const response = await fetch(url, {
@@ -72,19 +73,19 @@ export const actions = {
                 const attributes = parts.slice(1);
 
                 cookies.set(name, value, {
-                            path: "/",
-                            sameSite: 'lax',
-                            httpOnly: true,
-                            secure: false,
-                            maxAge: 3600
-                        });
+                    path: "/",
+                    sameSite: 'lax',
+                    httpOnly: true,
+                    secure: false,
+                    maxAge: 3600
+                });
             });
 
             const result = await response.json();
             if (!response.ok) {
                 return { status: response.status, body: result };
             }
-            //console.log(result);
+
             return result;
         } catch (error) {
             console.error("Error:", error);

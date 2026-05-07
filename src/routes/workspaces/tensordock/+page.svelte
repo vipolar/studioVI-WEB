@@ -1,42 +1,39 @@
 <script lang="ts">
+    import { workspacesCookiesPath, tensordockCookiePrefix } from '$lib/cookies/constants';
     import type { TensordockDetails } from "$lib/types/workspaces/tensordock";
-    import type { ServiceSimple } from '$lib/types/backend';
     import { enhance, applyAction } from "$app/forms";
     import type { PageProps } from "./$types";
     import { goto } from '$app/navigation';
+    import { onMount } from 'svelte';
+    import ServerFeaturesLoader from '$lib/components/ServerFeaturesLoader.svelte';
 
     let selected: TensordockDetails | null | undefined = $state();
     let servers: TensordockDetails[] = $state([]);
     let { data, form }: PageProps = $props();
 
-    let noRunningCheck = false;
+    let noRunningCheck = true;
     function preventDefault(fn: any) {
         return function (event: any) {
             event.preventDefault();
         };
     }
 
-    async function onclick() {
-		console.log($state.snapshot(servers));
-        noRunningCheck = true;
-	}
-
     $effect(() => {
-        const selectedServer = selected;
-		if (selectedServer && !selectedServer.services && (selectedServer.status === "running" || noRunningCheck)) {
-            const httpPort = selectedServer?.portForwards.find(port => port.internal_port === 80)?.external_port;
-            console.log("s");
-            if (httpPort) {
-                console.log(`Fetching services for server ${selectedServer.ipAddress}:${httpPort}`);
-                fetch(`?/start?server=${encodeURIComponent(`${selectedServer.ipAddress}:${httpPort}`)}`)
-                    .then(response => {
-                        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-                        return response.json();
-                    })
-                    .then(services => {
-                        selectedServer.services = services as ServiceSimple[];
-                    })
-                    .catch(error => console.error("Error fetching services:", error));;
+        const selectedServer = $state.snapshot(selected);
+        console.log("Selected server:", selectedServer);
+	});
+
+    onMount(() => {
+        const savedServers = localStorage.getItem(`${tensordockCookiePrefix}servers`);
+        if (savedServers) {
+            servers = JSON.parse(savedServers) as TensordockDetails[];
+
+            servers.forEach(server => {
+                server.status = 'pending';
+            });
+
+            if (servers.length > 0) {
+                selected = servers[0];
             }
         }
 	});
@@ -51,27 +48,17 @@
         </header>
         <div class="details">
             <!--aside>
+
+                MAYBE MAKE IT LESS RESOURCE HEAVY?!
+
                 <p>vCPUs: {selected.virtualmachines.specs.vcpus}</p>
                 <p>Memory: {selected.virtualmachines.specs.ram}GB</p>
                 <p>Storage: {selected.virtualmachines.specs.storage}GB</p>
                 <p>GPU{selected.virtualmachines.specs.gpu.amount > 1 ? "s" : ""}: {selected.virtualmachines.specs.gpu.amount > 1 ? `${selected.virtualmachines.specs.gpu.amount} x` : ""} {selected.virtualmachines.specs.gpu.type}</p>
             </aside-->
-            {#if selected.services}
-            <article>
-                <header>Available Services:</header>
-                <ul>
-                    {#each selected.services as service}
-                    {@const identifier = Object.keys(service)[0]}
-                    <li>
-                        <details>
-                            <summary>{service[identifier].name}</summary>
-                            <p>{service[identifier].description}</p>
-                            </details>
-                    </li>
-                    {/each}
-                </ul>
-            </article>
-            {/if}
+            <ServerFeaturesLoader featureType="models" server={selected} />
+            <ServerFeaturesLoader featureType="services" server={selected} />
+            <ServerFeaturesLoader featureType="utilities" server={selected} />
             <!--sup>
                 <table border="1" style="border-collapse: collapse; margin-left: auto;">
                     <thead>
@@ -91,6 +78,7 @@
                 </table>
                 <p style="margin: 2px;">*Prices are in $/hr</p>
             </sup-->
+
             {#if selected.status !== "running"}
                 <button type="button">Start</button>
                 <button type="button">Remove</button>
@@ -104,51 +92,32 @@
     {/if}
     <div class="servers" style="{!selected ? "max-width: unset" : ""}">
         <ul>
-            {#each servers as server}
+            {#each servers.toReversed() as server}
             {#if server.id}
             <li>
-                <label>
-                    <input type="radio" name="server" value={server} bind:group={selected} onclick={onclick} style="display: none;">
-                    <form method="POST" class="server" id="{server.id}" action="?/services" onsubmit={preventDefault}
-                        use:enhance={({ formData, formElement, action, cancel }) => {
-                            return async ({ result, update }) => {
-                                if (result.type === 'success') {
-                                    const resultData = result.data as unknown;
-                                    if (resultData !== null && typeof resultData === "object" && "services" in resultData) {
-                                            server.services = resultData.services as ServiceSimple[];;
-                                    }
-                                } else if (result.type === 'redirect') {
-                                    goto(result.location, { invalidateAll: true });
-                                }
-
-                                await update({invalidateAll: false, reset: false});
-                                await applyAction(result);
-                            }
-                        }}
-                    >
+                <label class={{'selected': selected?.id === server.id}}>
+                    <input type="radio" name="server" value={server} style="display: none;" bind:group={selected}>
+                    <div class="server">
                         <header>
                             <div>
                                 <p>{server.name}</p>
                                 <p>{server.id}</p>
                             </div>
-                            <input type="hidden" name="server" value={server.ipAddress} />
-                            <input type="hidden" name="port" value={server?.portForwards.find(port => port.internal_port === 80)?.external_port} />
-                            <div class={['status', {'running': server.status === "running"}, {'stopped': server.status === "stopped"}, {'severed': server.status === "stoppeddisassociated"}]}>•</div>
+                            <div class={['status', `${server.status.toLowerCase()}`]}>•</div>
                         </header>
                         <!--p>OS: {server.virtualmachines.operating_system}</p-->
                         <p>ID: {server.id}</p>
                         <p>Type: {server.type.charAt(0).toUpperCase() + server.type.slice(1)}</p>
                         <p>IP: {server.ipAddress}</p>
                         <!--p>Location: {server.virtualmachines.city} / {server.virtualmachines.state} / {server.virtualmachines.country}</p-->
-                        <button class="services" type="submit">Load services</button>
-                    </form>
+                    </div>
                 </label>
             </li>
             {/if}
             {/each}
 
             <li>
-                <label>
+                <label class={['form', {'selected': !selected}]}>
                     <input type="radio" name="server" value={null} bind:group={selected} style="display: none;" disabled={servers.length > 0}>
                     <form method="POST" class="server" action="?/connect" onsubmit={preventDefault}
                         use:enhance={({ formData, formElement, action, cancel }) => {
@@ -156,8 +125,11 @@
                                 if (result.type === 'success') {
                                     const resultData = result.data as unknown;
                                     if (resultData !== null && typeof resultData === "object" && "id" in resultData && resultData.id === formData.get("server")) {
-                                            servers.push(resultData as TensordockDetails);
-                                            selected = servers[servers.length - 1];
+                                        const server = resultData as TensordockDetails;
+
+                                        servers.push(server);
+                                        selected = servers[servers.length - 1];
+                                        localStorage.setItem(`${tensordockCookiePrefix}servers`, JSON.stringify(servers));
                                     }
                                 } else if (result.type === 'redirect') {
                                     goto(result.location, { invalidateAll: true });
@@ -183,6 +155,10 @@
 </div>
 
 <style>
+    @import '$lib/styles/animations/flicker.css';
+    @import '$lib/styles/animations/waves.css';
+    @import '$lib/styles/animations/glow.css';
+
     .tensordock {
         font-family: "Asap", sans-serif;
         justify-content: space-between;
@@ -197,9 +173,9 @@
     }
 
     .workspace {
-        box-shadow: 5px 10px 10px rgba(2, 128, 144, 0.2);
+        box-shadow: 5px 10px 10px var(--theme-box-shadow);
+        background-color: var(--theme-bg-nav-default);
         padding: 20px 30px 30px 30px;
-        background-color: white;
         box-sizing: border-box;
         border-radius: 10px;
         margin-right: 10px;
@@ -240,9 +216,9 @@
     }
 
     .server {
-        box-shadow: 5px 10px 10px rgba(2, 128, 144, 0.2);
+        box-shadow: 5px 10px 10px var(--theme-box-shadow);
+        background-color: var(--theme-bg-nav-default);
         padding: 20px 30px 30px 30px;
-        background-color: white;
         box-sizing: border-box;
         border-radius: 10px;
         position: relative;
@@ -262,6 +238,10 @@
             box-shadow 300ms;
     }
 
+    label:hover > .server {
+        transform: scale(1.02);
+    }
+
     .server::before,
     .server::after {
         border-bottom-right-radius: 40%;
@@ -279,20 +259,28 @@
 
     .server::before {
         background-color: rgba(69, 105, 144, 0.15);
-        -webkit-animation: wawes 6s infinite linear;
-        -moz-animation: wawes 6s infinite linear;
-        animation: wawes 6s infinite linear;
         bottom: -130%;
         left: 40%;
     }
 
+    label:hover > .server::before,
+    label.selected > .server::before {
+        -webkit-animation: wawes 6s infinite linear;
+        -moz-animation: wawes 6s infinite linear;
+        animation: wawes 6s infinite linear;
+    }
+
     .server::after {
         background-color: rgba(2, 128, 144, 0.2);
+        bottom: -125%;
+        left: 35%;
+    }
+
+    label:hover > .server::after,
+    label.selected > .server::after {
         -webkit-animation: wawes 7s infinite;
         -moz-animation: wawes 7s infinite;
         animation: wawes 7s infinite;
-        bottom: -125%;
-        left: 35%;
     }
 
     .server > header,
@@ -309,53 +297,35 @@
     }
 
     .server > header > .status {
-        color: goldenrod;
+        color: transparent;
+        font-size: 20px;
+    }
+
+    .server > header > .status.pending {
+        -webkit-animation: flicker 2s linear 0s infinite;
+        -moz-animation: flicker 2s linear 0s infinite;
+        animation: flicker 2s linear 0s infinite;
+        color: var(--theme-fg-pending);
     }
 
     .server > header > .status.running {
-        -webkit-animation: published-flick 2s linear 0s infinite;
-        -moz-animation: published-flick 2s linear 0s infinite;
-        animation: published-flick 2s linear 0s infinite;
-        text-shadow: 0px 0px 8px #88ff00;
-        color: #88ff00;
+        -webkit-animation: glow-success 2s linear 0s infinite;
+        -moz-animation: glow-success 2s linear 0s infinite;
+        animation: glow-success 2s linear 0s infinite;
+        color: var(--theme-fg-success);
     }
 
     .server > header > .status.stopped {
-        color: #ffe600;
+        text-shadow: 0px 0px 8px var(--theme-fg-warning);
+        color: var(--theme-fg-warning);
     }
 
-    .server > header > .status.severed {
-        color: #ff0000;
+    .server > header > .status.stoppeddisassociated {
+        text-shadow: 0px 0px 8px var(--theme-fg-error);
+        color: var(--theme-fg-error);
     }
 
-    .server > input {
-        background: white;
-        padding: 10px 10px;
-        margin: 15px -10px;
-        border-radius: 5px;
-        font-size: 16px;
-        display: block;
-        width: 100%;
-        border: 0;
-    }
-
-    .server > button,
-    .details > button {
-        -webkit-transition: background-color 300ms;
-        -moz-transition: background-color 300ms;
-        transition: background-color 300ms;
-        background-color: #2fa858;
-        text-transform: uppercase;
-        border-radius: 5px;
-        padding: 10px 15px;
-        margin-left: -5px;
-        margin-top: 10px;
-        color: #ffffff;
-        cursor: pointer;
-        font-size: 16px;
-        border: 0;
-    }
-
+    /*
     .server > button.services {
         position: absolute;
         height: 100%;
@@ -364,43 +334,5 @@
         margin: 0;
         left: 0;
         top: 0;
-    }
-
-    .server > button:hover,
-    .details > button:hover {
-        background-color: #339966;
-    }
-
-    @-webkit-keyframes wawes {
-        from {
-            -webkit-transform: rotate(0);
-        }
-        to {
-            -webkit-transform: rotate(360deg);
-        }
-    }
-    @-moz-keyframes wawes {
-        from {
-            -moz-transform: rotate(0);
-        }
-        to {
-            -moz-transform: rotate(360deg);
-        }
-    }
-    @keyframes wawes {
-        from {
-            -webkit-transform: rotate(0);
-            -moz-transform: rotate(0);
-            -ms-transform: rotate(0);
-            -o-transform: rotate(0);
-            transform: rotate(0);
-        }
-        to {
-            -webkit-transform: rotate(360deg);
-            -moz-transform: rotate(360deg);
-            -ms-transform: rotate(360deg);
-            -o-transform: rotate(360deg);
-            transform: rotate(360deg);
-        }
-    }
+    } */
 </style>

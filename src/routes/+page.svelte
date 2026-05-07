@@ -2,4 +2,4 @@
 
 </script>
 
-HELLO!
+<div>HELLO!</div>

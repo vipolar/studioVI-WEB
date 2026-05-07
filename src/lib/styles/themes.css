@@ -1,0 +1,77 @@
+:global(:root[data-theme='light']) {
+    --theme-text-shadow: 0 0px 0px rgba(0, 0, 0, 0.15);
+    --theme-box-shadow: rgba(2, 128, 144, 0.2);
+
+    --theme-fg-default: #15141A;
+    --theme-fg-success: #2ecc71;
+    --theme-fg-warning: #f39c12;
+    --theme-fg-pending: #daa520;
+    --theme-fg-accent: #1abc9c;
+    --theme-fg-muted: #a0b0c0;
+    --theme-fg-error: #e74c3c;
+    --theme-fg-info: #3498db;
+
+    --theme-bg-nav-default: #ffffff;
+    --theme-bg-nav-subtle: #fdfaf2;
+    --theme-bg-nav-alt: #f5e8c7;
+
+    --theme-bg-grad-0: #22c1c3;
+    --theme-bg-grad-1: #fdbb2d;
+    --theme-bg-grad-0a: #22c1c300;
+    --theme-bg-grad-1a: #fdbb2dff;
+
+    --theme-btn-fg-disabled: #a0b0c0;
+    --theme-btn-fg-default: #ffffff;
+    --theme-btn-fg-active: #ffffff;
+    --theme-btn-fg-hover: #ffffff;
+    --theme-btn-disabled: #2fa858;
+    --theme-btn-default: #2fa858;
+    --theme-btn-active: #339966;
+    --theme-btn-hover: #3cb371;
+
+    --theme-a-default: #384c74;
+    --theme-a-visited: #384c74;
+    --theme-a-active: #339966;
+    --theme-a-hover: #4caf50;
+
+    --theme-border: #d9e2ef;
+}
+
+:global(:root[data-theme='dark']) {
+    --theme-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --theme-box-shadow: rgba(0, 0, 0, 0.3);
+
+    --theme-fg-default: #f5f7fa;
+    --theme-fg-success: #2ecc71;
+    --theme-fg-warning: #f39c12;
+    --theme-fg-pending: #daa520;
+    --theme-fg-accent: #1abc9c;
+    --theme-fg-muted: #8c99a5;
+    --theme-fg-error: #e74c3c;
+    --theme-fg-info: #3498db;
+
+    --theme-bg-nav-default: #1a252f;
+    --theme-bg-nav-subtle: #0d141a;
+    --theme-bg-nav-alt: #223344;
+
+    --theme-bg-grad-0a: #0f202700;
+    --theme-bg-grad-1a: #2c5364ff;
+    --theme-bg-grad-0: #0f2027;
+    --theme-bg-grad-1: #2c5364;
+
+    --theme-btn-fg-disabled: #8c99a5;
+    --theme-btn-fg-default: #f5f7fa;
+    --theme-btn-fg-active: #f5f7fa;
+    --theme-btn-fg-hover: #f5f7fa;
+    --theme-btn-disabled: #1abc9c;
+    --theme-btn-default: #1abc9c;
+    --theme-btn-active: #16a085;
+    --theme-btn-hover: #48c9b0;
+
+    --theme-a-default: #5dade2;
+    --theme-a-visited: #3498db;
+    --theme-a-active: #1abc9c;
+    --theme-a-hover: #48c9b0;
+
+    --theme-border: #34495e;
+}

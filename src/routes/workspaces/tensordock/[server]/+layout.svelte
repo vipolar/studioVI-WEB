@@ -2,6 +2,7 @@
 	import type { LayoutProps } from './$types';
 
 	let { data, children }: LayoutProps = $props();
+	const server = data.server;
 </script>
 
 <pre>{JSON.stringify(data.server, null, 2)}</pre>

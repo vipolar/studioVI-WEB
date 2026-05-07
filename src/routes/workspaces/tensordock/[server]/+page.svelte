@@ -1,13 +1,14 @@
 <script lang="ts">
-    import type { ServiceExtensive } from '$lib/types/backend';
+    import type { ServiceSimple } from '$lib/types/backend';
     import { enhance, applyAction } from "$app/forms";
     import type { PageProps } from "./$types";
     import { goto } from '$app/navigation';
 
     let { data, form }: PageProps = $props();
+    const server = data.server;
 
     let services = $derived(data?.services!.flatMap((service: {[s: string]: unknown;}) => Object.entries(service).map(([key, value]) => ({
-        ...(value as ServiceExtensive),
+        ...(value as ServiceSimple),
         identifier: key
     }))));
 </script>
@@ -20,6 +21,7 @@
 {/each}
 
 <div>
+    {#if server && server.status === "running"}
     <form method="POST" class="server" action="?/login" use:enhance={({ formData, formElement, action, cancel }) => {
                 return async ({ result, update }) => {
                     if (result.type === 'success') {
@@ -38,16 +40,20 @@
         >
         <header>
             <div>Log in:</div>
-            <div class="status"><strong>•</strong></div>
+            <div class={['status', `${server.status.toLowerCase()}`]}><strong>•</strong></div>
         </header>
         <input type="text" name="username" placeholder="Username" autocomplete="off" required />
         <input type="password" name="password" placeholder="Password" autocomplete="off" required />
         <button type="submit">Login</button>
     </form>
+    {/if}
 </div>
 
 
 <style>
+    @import '$lib/styles/animations/flicker.css';
+    @import '$lib/styles/animations/waves.css';
+
     .server {
         box-shadow: 5px 10px 10px rgba(2, 128, 144, 0.2);
         padding: 20px 30px 30px 30px;
@@ -122,10 +128,9 @@
     }
 
     .server > header > .status.running {
-        -webkit-animation: published-flick 2s linear 0s infinite;
-        -moz-animation: published-flick 2s linear 0s infinite;
-        animation: published-flick 2s linear 0s infinite;
-        text-shadow: 0px 0px 8px #88ff00;
+        -webkit-animation: flicker-success 2s linear 0s infinite;
+        -moz-animation: flicker-success 2s linear 0s infinite;
+        animation: flicker-success 2s linear 0s infinite;
         color: #88ff00;
     }
 
@@ -133,7 +138,7 @@
         color: #ffe600;
     }
 
-    .server > header > .status.severed {
+    .server > header > .status.stoppeddisassociated {
         color: #ff0000;
     }
 
@@ -148,12 +153,11 @@
         border: 0;
     }
 
-    .server > button,
-    .details > button {
+    .server > button {
+        background-color: var(--theme-btn-regular, #2fa858);
         -webkit-transition: background-color 300ms;
         -moz-transition: background-color 300ms;
         transition: background-color 300ms;
-        background-color: #2fa858;
         text-transform: uppercase;
         border-radius: 5px;
         padding: 10px 15px;
@@ -165,41 +169,7 @@
         border: 0;
     }
 
-    .server > button:hover,
-    .details > button:hover {
-        background-color: #339966;
-    }
-
-    @-webkit-keyframes wawes {
-        from {
-            -webkit-transform: rotate(0);
-        }
-        to {
-            -webkit-transform: rotate(360deg);
-        }
-    }
-    @-moz-keyframes wawes {
-        from {
-            -moz-transform: rotate(0);
-        }
-        to {
-            -moz-transform: rotate(360deg);
-        }
-    }
-    @keyframes wawes {
-        from {
-            -webkit-transform: rotate(0);
-            -moz-transform: rotate(0);
-            -ms-transform: rotate(0);
-            -o-transform: rotate(0);
-            transform: rotate(0);
-        }
-        to {
-            -webkit-transform: rotate(360deg);
-            -moz-transform: rotate(360deg);
-            -ms-transform: rotate(360deg);
-            -o-transform: rotate(360deg);
-            transform: rotate(360deg);
-        }
+    .server > button:hover {
+        background-color: var(--theme-btn-hover, #339966);
     }
 </style>
